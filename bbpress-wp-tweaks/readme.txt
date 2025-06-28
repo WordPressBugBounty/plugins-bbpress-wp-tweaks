@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/donate/?hosted_button_id=LZ4LP4MQJDH7Y
 Tags: bbpress,forum,sidebar,login links,forum sidebar,widgets, forum widgets,bbpress sidebar,bbpress tweaks,bbpress wrapper, bbPress WP Tweaks
 Requires at least: 4.7
 Tested up to: 6.8
-Stable tag: 1.5
+Stable tag: 1.5.1
 
 Adds bbPress forum specific sidebar, wrapper, widgets, user columns, login links and other tweaks. 
 
@@ -16,7 +16,7 @@ https://youtu.be/7LVt41oLscs
 
 [Watch plugin overview on YouTube](https://youtu.be/7LVt41oLscs)
 
-To setup forum specific sidebar you should first select correct forum wrapper file which has sidebar. Then select what action perform with existing sidebar: replace, prepend or append. Then  select which sidebar to target with this action. You can also choose "none" option for target sidebar, in that case no bbPress sidebar will not be added to wordpress. 
+To setup forum specific sidebar you should first select correct forum wrapper file which has sidebar. Then select what action perform with existing sidebar: replace, prepend or append. Then select which sidebar to target with this action. You can also choose "none" option for target sidebar, in that case no bbPress sidebar will not be added to wordpress. 
 
 If nothing in forum sidebar then regular sidebar will be shown. 
 
@@ -35,9 +35,9 @@ Plugin tested with PHP version 5.6, 7.x and up to 8.4.
 * Forum related columns for users view in admin area
 
 
-**bbPress specific sidebar** — you can use different sidebar on forum pages. You can choose which sidebar to replace, append or prepend to. Appending or prepending is useful if you only need to add couple forum related widgets. Custom sidebar will be used in all forum related pages including forum, topic, reply,and user profile pages. 
+**bbPress specific sidebar** (works only on Classic themes) — you can use different sidebar on forum pages. You can choose which sidebar to replace, append or prepend to. Appending or prepending is useful if you only need to add couple forum related widgets. Custom sidebar will be used in all forum related pages including forum, topic, reply,and user profile pages. 
 
-**default wrapper for forum pages** — bbPRess uses wrapper file in your theme in this order: 'bbpress.php',	'forum.php', 'page.php', 'single.php', 'index.php'. First existing template file will be used. You can choose which template file to check first. Most themes  don't have sidebar in 'page.php', 'single.php' files, if you choose them then no sidebar will be shown in forums. On the other hand most themes 'index.php' file always has sidebar. If you cannot see forum sidebar then change this value to index.php in plugin settings (settings -> bbPress WP Tweaks ) page. If your theme has other non standard template files like "page-fullwidth.php" for example then you can use it by selecting "custom" option and writing page-fullwidth.php in text input field. If that file exists then it will be used as forum wrapper.
+**Default wrapper for forum pages** (works only on Classic themes) — bbPRess uses wrapper file in your theme in this order: 'bbpress.php',	'forum.php', 'page.php', 'single.php', 'index.php'. First existing template file will be used. You can choose which template file to check first. Most themes don't have sidebar in 'page.php', 'single.php' files, if you choose them then no sidebar will be shown in forums. On the other hand most themes 'index.php' file always has sidebar. If you cannot see forum sidebar then change this value to index.php in plugin settings (settings -> bbPress WP Tweaks ) page. If your theme has other non standard template files like "page-fullwidth.php" for example then you can use it by selecting "custom" option and writing page-fullwidth.php in text input field. If that file exists then it will be used as forum wrapper.
 
 **Font size** — Simple switch to fix forum font size. Available sizes: XL, L, M, S, XS.
 
@@ -55,7 +55,7 @@ Plugin tested with PHP version 5.6, 7.x and up to 8.4.
 
 **Show forum description** — By default forum description is shown only on where forums are listed, not in forum page. With this options enabled you will show forum description on Forum page, on sub forums, on topics, on replies. So user will know what this forum about. If it is a product forum then you can add product image, links or buttons to product page, pricing/purchase page etc. This will make navigation between product and forum a lot easier.
 
-**Forum related columns for users view in admin area** — is must have feature to have for any forum administrator. With this option enabled you will have forum related sortable columns "number of topics", "number of replies", "registration date", "last active date"  in "Users" admin page. Topic and reply counts are linked to user profile pages. You can sort by those columns and see latest registered users or users with most topics. Each column seperately can be switched off using "Screen Options" inside users page.
+**Forum related columns for users view in admin area** — is must have feature to have for any forum administrator. With this option enabled you will have forum related sortable columns "number of topics", "number of replies", "registration date", "last active date" in "Users" admin page. Topic and reply counts are linked to user profile pages. You can sort by those columns and see latest registered users or users with most topics. Each column seperately can be switched off using "Screen Options" inside users page.
 
 **Disable not used features of plugin** — you can disable sidebar by selecting "none" as target sidebar. Disable widgets by unchecking relaed checkboxes in plugin options page. All other features also can be individually enabled or disabled in plugin options page. 
 
@@ -89,10 +89,10 @@ Extract all files from the ZIP file, making sure to keep the file structure inta
 This should result in the following file structure:
 
 `- wp-content
-    - plugins
-        - bbpress-wp-tweaks
-            | bbpress-wp-tweaks.php`
-            | readme.txt
+ - plugins
+ - bbpress-wp-tweaks
+ | bbpress-wp-tweaks.php`
+ | readme.txt
 			| style.css
 
 Then just visit your admin area and activate the plugin.
@@ -119,12 +119,38 @@ Or use plugin installer by navigating to "Plugins" -> "Add new" page and search 
 
 == Frequently Asked Questions ==
 
+= Does bbPRess sidebar work with FSE (Full Site Editing, Block) themes? =
+
+No, it does not. Because there is no `sidebar` or `widgets` in FSE themes. 
+
+"bbPRess sidebar" only works with Classic Themes. 
+
+Even if you can see and edit widgets in admin area, FSE themes does not support sidebars and widgets. 
+
+= How to fix "white screen" error on bbPress Forum page while using FSE themes? =
+
+Use "[Enable bbPress for Block Themes](https://wordpress.org/plugins/enable-bbp-block-theme/)" plugin to fix "white screen" error for bbPRess forums in FSE themes. 
+
+Important: This fix will not enable "bbPress sidebar" for your forums. 
+
+= How to know if I am using Classic or FSE (Full Site Editing) theme? =
+
+Navigate to "Settings" → "bbPRess WP Tweaks" page. You will see one of following messages:
+
+* You are using: ✓ Classic theme.
+* You are using: FSE (Full Site Editing) theme.
+
 = Does this plugin support other languages? =
 
 Yes, it does. See the [WordPress Codex](http://codex.wordpress.org/Translating_WordPress) for details on how to make a translation file. Then just place the translation file, named `bbpress-wp-tweaks-[value in wp-config].mo`, into the plugin's /languages/ folder.
 
 
 == ChangeLog ==
+
+**Version 1.5.1 (release date: 28.06.2025)**
+
+* Added: Shows current theme type, `Classic` or `FSE (Full Site Editing, Block)` theme.
+* Fixed: TypeError when calculating users' last login date. Changed meta_key to unique value for avoiding conflicts. (Thank you for reporting)
 
 **Version 1.5 (release date: 27.06.2025)**
 
@@ -163,7 +189,7 @@ Yes, it does. See the [WordPress Codex](http://codex.wordpress.org/Translating_W
 * Added option to disable not used widgets offered by this plugin
 * Added option to redirect 404 page for authors to related forum profile page
 * Changed minimum requred version WP 4.7, bbPress 2.5
-* Made plugin  php7 ready
+* Made plugin php7 ready
 
 **Version 1.3.1**
 

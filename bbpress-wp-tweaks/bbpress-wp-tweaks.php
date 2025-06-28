@@ -5,7 +5,7 @@
   Plugin Name:  bbPress WP Tweaks
   Plugin URI:   https://veppa.com/bbpress-wp-tweaks/
   Description:  Adds bbPress forum specific sidebar, wrapper, widgets, user columns, login links and other tweaks.
-  Version:      1.5
+  Version:      1.5.1
   Author:       veppa
   Author URI:   https://veppa.com/
   Text Domain:	bbpress-wp-tweaks
@@ -44,8 +44,9 @@ if (!class_exists('BbpressWpTweaks')) :
     class BbpressWpTweaks
     {
 
-        const VERSION = '1.5';
+        const VERSION = '1.5.1';
         const ID = 'bbpress-wp-tweaks';
+        const KEY_LAST_LOGIN = 'bbpress-wp-tweaks_last_login';
 
         public static $instance;
         public $sidebar_id = 'sidebar-bbpress';
@@ -183,6 +184,24 @@ if (!class_exists('BbpressWpTweaks')) :
                 // delete old option
                 delete_option('default_wrapper_file');
             }
+
+
+
+            /* version related updates */
+            $version = self::VERSION;
+
+            $db_version = self::get_option('version', 0);
+
+            if (version_compare($db_version, $version, '<'))
+            {
+                if (version_compare($db_version, '1.5.1', '<'))
+                {
+                    // delete old 'last_login' custom field for all users from usermeta table. 
+                    // because it is too common for meta key
+                    delete_metadata('user', get_current_user_id(), 'last_login', null, true);
+                }
+                self::update_option('version', $version);
+            }
         }
 
         /**
@@ -281,15 +300,19 @@ if (!class_exists('BbpressWpTweaks')) :
             if (is_user_logged_in())
             {
                 $timeframe_minut = 15;
-                $user = wp_get_current_user();
-                //var_dump($user);
-                $user_id = $user->ID;
                 $time = time();
-                $last_login = get_user_meta($user_id, 'last_login', true);
-                if ($last_login < $time - ($timeframe_minut * MINUTE_IN_SECONDS))
+
+                $user_id = get_current_user_id();
+
+                if ($user_id)
                 {
-                    // update value
-                    update_user_meta($user_id, 'last_login', $time);
+                    $last_login = get_user_meta($user_id, BbpressWpTweaks::KEY_LAST_LOGIN, true);
+                    $last_login = is_object($last_login) ? 0 : intval($last_login);
+                    if ($last_login < $time - ($timeframe_minut * MINUTE_IN_SECONDS))
+                    {
+                        // update value
+                        update_user_meta($user_id, BbpressWpTweaks::KEY_LAST_LOGIN, $time);
+                    }
                 }
             }
         }
@@ -298,25 +321,34 @@ if (!class_exists('BbpressWpTweaks')) :
          * Display last login time
          *
          */
-        function lastlogin($user_id = null)
+        function lastlogin($user_id)
         {
-            if (is_null($user_id))
-            {
-                $author = get_the_author();
-                $user_id = $author->ID;
-            }
-
+            $user_id = intval($user_id);
             if ($user_id)
             {
-                $last_login = get_the_author_meta('last_login', $user_id);
-                if ($last_login)
+                $last_login = get_the_author_meta(BbpressWpTweaks::KEY_LAST_LOGIN, $user_id);
+                $the_login_date = BbpressWpTweaks::human_time_diff($last_login);
+                if (!empty($the_login_date))
                 {
-                    $the_login_date = human_time_diff($last_login);
                     return sprintf(__('%s ago', 'bbpress-wp-tweaks'), $the_login_date);
                 }
             }
 
             return;
+        }
+
+        public static function human_time_diff($time)
+        {
+            if (is_numeric($time))
+            {
+                $time = abs(intval($time));
+                if ($time)
+                {
+                    return human_time_diff($time);
+                }
+            }
+
+            return '';
         }
 
         function user_columns_add($columns)
@@ -371,7 +403,7 @@ if (!class_exists('BbpressWpTweaks')) :
                 'topic'      => '_bbp_topic_count',
                 'reply'      => '_bbp_reply_count',
                 'reg_date'   => 'user_registered',
-                'login_date' => 'last_login'
+                'login_date' => BbpressWpTweaks::KEY_LAST_LOGIN
             );
             return wp_parse_args($custom, $columns);
             /* or this way
@@ -400,9 +432,9 @@ if (!class_exists('BbpressWpTweaks')) :
                     $userquery->query_where .= " AND alias.meta_key = 'wp__bbp_reply_count' "; //which meta are we sorting with?
                     $userquery->query_orderby = " ORDER BY alias.meta_value +0 " . $order; //set sort order
                     break;
-                case 'last_login':
+                case BbpressWpTweaks::KEY_LAST_LOGIN:
                     $userquery->query_from .= " LEFT OUTER JOIN $wpdb->usermeta AS alias ON ($wpdb->users.ID = alias.user_id) "; //note use of alias
-                    $userquery->query_where .= " AND alias.meta_key = 'last_login' "; //which meta are we sorting with?
+                    $userquery->query_where .= " AND alias.meta_key = '" . BbpressWpTweaks::KEY_LAST_LOGIN . "' "; //which meta are we sorting with?
                     $userquery->query_orderby = " ORDER BY alias.meta_value " . $order; //set sort order
                     break;
             }
@@ -942,6 +974,7 @@ if (!class_exists('BbpressWpTweaks')) :
                     <div class="bbwptw-box">
                         <h3><?php _e('Docs and Help', 'bbpress-wp-tweaks'); ?></h3>
                         <ul>
+                            <li>▶ <a href="https://youtu.be/7LVt41oLscs" target="_blank"><?php _e('Video tutorial', 'bbpress-wp-tweaks'); ?></a></li>
                             <li><a href="http://veppa.com/bbpress-wp-tweaks/?utm_source=wp&utm_medium=plugin&utm_campaign=options#doc" target="_blank"><?php _e('Documentation', 'bbpress-wp-tweaks'); ?></a></li>
                             <li><a href="https://wordpress.org/support/plugin/bbpress-wp-tweaks" target="_blank"><?php _e('Support', 'bbpress-wp-tweaks'); ?></a></li>
                         </ul>
@@ -993,6 +1026,28 @@ if (!class_exists('BbpressWpTweaks')) :
             }
 
             return self::$options[$name];
+        }
+
+        static public function update_option($name, $value = '')
+        {
+            if (is_null(self::$options))
+            {
+                self::$options = get_option(self::ID, array());
+            }
+
+            self::$options[$name] = $value;
+
+            $return = update_option(self::ID, self::$options, false);
+            if (!$return)
+            {
+                // might be conflict with cached option. delete cache 
+                wp_cache_delete(self::ID, 'option');
+
+                // try again saving option
+                $return = update_option(self::ID, self::$options, false);
+            }
+
+            return $return;
         }
 
         /**
@@ -1109,11 +1164,11 @@ if (!class_exists('BbpressWpTweaks')) :
         function sanitize($input)
         {
             $arr_allowed_fields = array(
-                'wrapper'                  => 1,
-                'wrapper_custom'           => 1,
+                'wrapper'                  => 'use_old_value',
+                'wrapper_custom'           => 'use_old_value',
                 'font_size'                => 1,
-                'sidebar_action'           => 1,
-                'sidebar_target'           => 1,
+                'sidebar_action'           => 'use_old_value',
+                'sidebar_target'           => 'use_old_value',
                 'login_btn_show'           => 1,
                 'login_btn_template'       => 1,
                 'show_description'         => 1,
@@ -1143,8 +1198,19 @@ if (!class_exists('BbpressWpTweaks')) :
                 }
                 else
                 {
-                    // save not set fields as 0. these are checkboxes
-                    $new_input[$k] = 0;
+
+                    if ($v === 'use_old_value')
+                    {
+                        // some select, radio inputs are not shown in FSE theme. 
+                        // Store old values if no new value saved. 
+                        // when user switches FSE to classic old values will be helpful so widgets in bbp[ress sidebar should remain in place. 
+                        $new_input[$k] = BbpressWpTweaks::get_option($k, '');
+                    }
+                    else
+                    {
+                        // save not set fields as 0. these are checkboxes
+                        $new_input[$k] = 0;
+                    }
                 }
             }
 
@@ -1166,11 +1232,19 @@ if (!class_exists('BbpressWpTweaks')) :
             if (self::is_block_theme())
             {
                 echo '<p>'
-                . __('You are using <b class="attention">FSE (Full Site Editing) theme</b>. If bbPress is causing a "white screen" instead of displaying your forum pages, install the "Enable bbPress for Block Themes" plugin to resolve the issue. <a href="https://veppa.com/bbpress-wp-tweaks/#bbpress-fse" target="_blank">Learn more →</a>', 'bbpress-wp-tweaks')
+                . __('You are using: <b class="attention">FSE (Full Site Editing) theme</b>.', 'bbpress-wp-tweaks')
+                . '</p>';
+
+                echo '<p>'
+                . __('If bbPress is causing a "white screen" instead of displaying your forum pages, install the "Enable bbPress for Block Themes" plugin to resolve the issue. <a href="https://veppa.com/bbpress-wp-tweaks/#bbpress-fse" target="_blank">Learn more →</a>', 'bbpress-wp-tweaks')
                 . '</p>';
             }
             else
             {
+                echo '<p>'
+                . __('You are using: ✓ <b>Classic theme</b>.', 'bbpress-wp-tweaks')
+                . '</p>';
+
                 echo '<p>'
                 . __('Select template file that you prefer bbPress rendered in. Make sure template file is present in your theme directory. If sidebar is not displaying make sure you put some widgets to "bbPress sidebar" in <a href="widgets.php">widgets</a> page then try different forum wrapper from this list.', 'bbpress-wp-tweaks')
                 . '</p>';
@@ -1454,7 +1528,7 @@ if (!class_exists('BbpressWpTweaks')) :
         static public function uninstall()
         {
             // delete last_login custom field for all users from usermeta table
-            delete_metadata('user', get_current_user_id(), 'last_login', null, true);
+            delete_metadata('user', get_current_user_id(), BbpressWpTweaks::KEY_LAST_LOGIN, null, true);
 
             // delete plugin options
             delete_option(self::ID);
@@ -1709,23 +1783,23 @@ if (!class_exists('BbpressWpTweaks')) :
                 case 'active':
                     $user_query = new WP_User_Query(array(
                         'orderby'  => 'meta_value_num',
-                        'meta_key' => 'last_login',
+                        'meta_key' => BbpressWpTweaks::KEY_LAST_LOGIN,
                         'order'    => 'DESC',
                         'number'   => $limit
                     ));
-                    $meta_key = 'last_login';
+                    $meta_key = BbpressWpTweaks::KEY_LAST_LOGIN;
                     $title_suggested = __('Active users', 'bbpress-wp-tweaks');
                     break;
                 case 'online':
                     $user_query = new WP_User_Query(array(
                         'orderby'      => 'meta_value_num',
-                        'meta_key'     => 'last_login',
+                        'meta_key'     => BbpressWpTweaks::KEY_LAST_LOGIN,
                         'meta_value'   => time() - 30 * MINUTE_IN_SECONDS,
                         'meta_compare' => '>',
                         'order'        => 'DESC',
                         'number'       => $limit
                     ));
-                    $meta_key = 'last_login';
+                    $meta_key = BbpressWpTweaks::KEY_LAST_LOGIN;
                     $title_suggested = __('Online users', 'bbpress-wp-tweaks');
                     break;
                 case 'new':
@@ -1770,12 +1844,12 @@ if (!class_exists('BbpressWpTweaks')) :
                     // format extra info
                     switch ($meta_key)
                     {
-                        case 'last_login':
-                            $the_login_date = human_time_diff($user->$meta_key);
+                        case BbpressWpTweaks::KEY_LAST_LOGIN:
+                            $the_login_date = BbpressWpTweaks::human_time_diff($user->$meta_key);
                             $count = sprintf(__('%s ago', 'bbpress-wp-tweaks'), $the_login_date);
                             break;
                         case 'user_registered':
-                            $the_reg_date = human_time_diff(strtotime($user->$meta_key));
+                            $the_reg_date = BbpressWpTweaks::human_time_diff(strtotime($user->$meta_key));
                             $count = sprintf(__('%s ago', 'bbpress-wp-tweaks'), $the_reg_date);
                             break;
                         default:
