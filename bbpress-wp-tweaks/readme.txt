@@ -3,7 +3,7 @@ Contributors: veppa
 Donate link: https://www.paypal.com/donate/?hosted_button_id=LZ4LP4MQJDH7Y
 Tags: bbpress,forum,sidebar,login links,forum sidebar,widgets, forum widgets,bbpress sidebar,bbpress tweaks,bbpress wrapper, bbPress WP Tweaks
 Requires at least: 4.7
-Tested up to: 6.8
+Tested up to: 6.9
 Stable tag: 1.5.1
 
 Adds bbPress forum specific sidebar, wrapper, widgets, user columns, login links and other tweaks. 
